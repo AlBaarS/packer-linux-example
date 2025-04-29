@@ -1,0 +1,31 @@
+#   Exotische file systemen uitschakelen - ja (ook usb-storage)
+partitioning - nee
+#   coredump.conf - wordt gedaan met scripts
+#   kernel met sysctl - wordt gedaan met de scripts
+unconfined services - nee
+#   contents of (login) banner - ja (bevat de machine naam, verschilt per machine)
+#   automatic mounting of removable media - misschien (wel doen)
+#   sysconfig/chronyd en crony.conf - ja
+nginx, snmp, rsync - nee (blijft erop staan)
+#   nmcli - ja (disabled)
+#   ipv4/6 settings - wordt gedaan met scripts
+#   firewalld - door mij gedaan
+andere firewall dingen - nee (wellicht voor mij om te doen)
+#   audit - wordt door scripts gedaan (check na)
+#   rsyslog - ? (wel meegenomen)
+journald conf - wordt door scripts gedaan
+#*  permissions logfiles in /var/log/ - ja    *(De meeste files en folders zijn 600 by default, sommige folders zijn überhaupt niet toegankelijk voor non-root users)
+#   crontab - wordt door scripts gedaan (cron.deny wordt vervangen door cron.allow)
+#*  sshd - wordt door scripts gedaan (check na in hoeverre)   *(Iets veiliger getweaked, wat mogelijk is met de key authenticatie)
+#   sudo config - ja
+sudo NOPASSWD - nee
+PAM configuratie - nee
+#   password configuratie - ja
+#   faillock.conf - ja
+password expiration - nee (moet uit)
+password minimum - moet 0 zijn in alle gevallen
+account inactivity expiration - nee
+session TMOUT - nee
+UMASK - nee
+world writable files - nee
+/home dir ownership & permissions - nee

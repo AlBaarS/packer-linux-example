@@ -1,0 +1,117 @@
+# Crafted using an example: https://github.com/goffinet/packer-kvm/blob/master/http/centos10-kickstart.cfg
+
+# Required commands
+bootloader --location=mbr --append=" net.ifnames=0 biosdevname=0 crashkernel=no"
+keyboard --vckeymap=us --xlayouts='us'
+lang en_US.UTF-8
+#part <-- replaced by autopart
+rootpw --plaintext "${password}"
+timezone Europe/Amsterdam --utc
+
+# Optional
+## Disable graphical installation
+text
+## Disable the Initial Setup application
+firstboot --disable
+## Configure the machine's network devices
+network --bootproto=dhcp --device=eth0 --ipv6=auto --activate
+network --hostname=${machine_name}
+## Ensure SELinux is active
+selinux --enforcing
+## Create a pre-made user
+user --groups=wheel --name=${username} --password=${password} --uid=1000 --gecos="user" --gid=1000 --iscrypted
+## Clear the Master Boot Record
+zerombr
+## Remove partitions
+clearpart --all --initlabel
+## Automatically create partitions using LVM
+autopart --type=thinp --fstype=ext4 
+## Reboot after successful installation
+reboot
+
+
+# Script to run before installation
+%pre
+## Configure GRUB setting
+sed -i 's/rhgb //' /etc/default/grub
+%end
+
+
+# Install/ensure packages to be part of the system
+%packages --ignoremissing --excludedocs
+sudo
+nano
+wget
+curl
+zip
+unzip
+tar
+git
+openssh
+openssh-server
+-kexec-tools
+-dracut-config-rescue
+-plymouth*
+-iwl*firmware
+%end
+
+%addon com_redhat_kdump --disable
+%end
+
+# Commands run after configuration but before the first reboot
+%post
+
+## Set trusted public key for the created user
+mkdir -p /home/${username}/.ssh/
+echo "${pubkey}" > /home/${username}/.ssh/authorized_keys
+
+## Configure SSH connections
+sudo sed -i "s/PasswordAuthentication yes/#PasswordAuthentication yes/g" /etc/ssh/sshd_config
+## ^ Ensures that "PasswordAuthentication yes" will always be commented
+sudo echo "" >> /etc/ssh/sshd_config
+sudo echo "" >> /etc/ssh/sshd_config
+sudo echo "# Company config" >> /etc/ssh/sshd_config
+sudo echo "PasswordAuthentication no" >> /etc/ssh/sshd_config
+sudo echo "HostbasedAuthentication no" >> /etc/ssh/sshd_config
+sudo echo "PermitEmptyPasswords no" >> /etc/ssh/sshd_config
+sudo echo "PermitUserEnvironment no" >> /etc/ssh/sshd_config
+sudo echo "PermitRootLogin no" >> /etc/ssh/sshd_config
+sudo echo "IgnoreRhosts yes" >> /etc/ssh/sshd_config
+sudo echo "X11Forwarding no" >> /etc/ssh/sshd_config
+sudo echo "AllowTcpForwarding no" >> /etc/ssh/sshd_config
+sudo echo "Banner /etc/issue" >> /etc/ssh/sshd_config
+sudo echo "MaxAuthTries 1" >> /etc/ssh/sshd_config
+sudo echo "MaxStartups 10:30:60" >> /etc/ssh/sshd_config
+sudo echo "MaxSessions 10" >> /etc/ssh/sshd_config
+sudo echo "LoginGraceTime 20s" >> /etc/ssh/sshd_config
+sudo echo "ClientAliveCountMax 3" >> /etc/ssh/sshd_config
+sudo echo "ClientAliveInterval 300" >> /etc/ssh/sshd_config
+sudo echo "Include /etc/ssh/sshd_config.d/*.conf" >> /etc/ssh/sshd_config
+sudo echo "AuthorizedKeysFile .ssh/authorized_keys" >> /etc/ssh/sshd_config
+sudo echo "Subsystem sftp /usr/libexec/openssh/sftp-server" >> /etc/ssh/sshd_config
+
+## Configure the sudo rights of the user
+echo "Defaults use_pty" >> /etc/sudoers.d/${username}
+echo "Defaults logfile=/var/log/sudo.log" >> /etc/sudoers.d/${username}
+echo "${username} ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers.d/${username}
+echo "Defaults use_pty" >> /etc/sudoers
+echo "Defaults logfile=/var/log/sudo.log" >> /etc/sudoers
+
+## Allow the user to run cron jobs but disable for everyone else
+rm /etc/cron.deny
+echo "${username}\n" > /etc/cron.allow
+
+## Enable NetworkManager and sshd
+systemctl enable NetworkManager
+systemctl enable sshd
+systemctl start sshd
+
+## Configure and enable the firewall
+firewall-cmd --zone=internal --permanent --add-service=ssh
+systemctl enable firewalld
+systemctl start firewalld
+
+## Install necessary packages
+sudo yum --assumeyes install dconf
+
+%end
