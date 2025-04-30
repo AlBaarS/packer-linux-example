@@ -81,25 +81,25 @@ variable "vcenter_password" {
 
 variable "vcenter_server" {
   type        = string
-  default     = "photon-machine.sogyo.nl"
+  default     = "vcenter.company.com"
   description = "The vCenter instance used for managing the ESX host."
 }
 
 variable "host" {
   type        = string
-  default     = "vs1.sogyo.nl"
+  default     = "vcenter.host1.company.com"
   description = "The ESX host where the virtual machine will be built."
 }
 
 variable "datacenter" {
   type        = string
-  default     = "Boerderij"
+  default     = "Datacenter"
   description = "The name of the datacenter itself"
 }
 
 variable "datastore" {
   type        = string
-  default     = "HPE RAID 10"
+  default     = "Disk"
   description = "The ESXi datastore where the ISO and virtual machine will be stored."
 }
 
